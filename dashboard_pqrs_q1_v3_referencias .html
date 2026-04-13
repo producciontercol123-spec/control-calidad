@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard PQRS — Q1 2025 vs 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --rojo: #AC0711; --rojo-dark: #721C24; --rojo-light: #F5E6E7;
+    --carbon: #2C2C2C; --gris-medio: #4B4949; --gris-suave: #8D8D8D;
+    --gris-bg: #F0F0F0; --gris-borde: #E1DFDF; --blanco: #FFFFFF;
+    --verde: #2D7A40; --verde-bg: #EAF3DE; --fondo: #F7F6F4;
+  }
+  body { font-family: 'Barlow', sans-serif; background: var(--fondo); color: var(--carbon); min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: var(--carbon); padding: 22px 40px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--rojo); }
+  .header-left { display: flex; align-items: center; gap: 18px; }
+  .logo { background: var(--rojo); color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 19px; font-weight: 700; letter-spacing: 0.08em; padding: 7px 14px; border-radius: 4px; }
+  .h-title { font-family: 'Barlow Condensed', sans-serif; font-size: 21px; font-weight: 600; color: #fff; letter-spacing: 0.02em; }
+  .h-sub { font-size: 11px; color: var(--gris-suave); margin-top: 2px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .badge-q1 { background: var(--rojo); color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; padding: 5px 13px; border-radius: 4px; display: inline-block; }
+  .h-date { font-size: 11px; color: var(--gris-suave); margin-top: 5px; text-align: right; }
+
+  /* FILTER BAR */
+  .filter-bar { background: var(--blanco); border-bottom: 1px solid var(--gris-borde); padding: 14px 40px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .filter-group { display: flex; align-items: center; gap: 6px; }
+  .filter-label { font-size: 11px; font-weight: 600; color: var(--gris-suave); text-transform: uppercase; letter-spacing: 0.07em; white-space: nowrap; margin-right: 2px; }
+  .filter-divider { width: 1px; height: 24px; background: var(--gris-borde); }
+  .fbtn { padding: 5px 14px; border-radius: 4px; border: 1px solid var(--gris-borde); background: var(--blanco); font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 500; color: var(--gris-medio); cursor: pointer; transition: all 0.15s; user-select: none; }
+  .fbtn:hover { border-color: var(--rojo); color: var(--rojo); }
+  .fbtn.active { background: var(--rojo); border-color: var(--rojo); color: #fff; }
+  .filter-reset { padding: 5px 12px; border-radius: 4px; border: 1px dashed var(--gris-borde); background: transparent; font-family: 'Barlow', sans-serif; font-size: 11px; color: var(--gris-suave); cursor: pointer; transition: all 0.15s; }
+  .filter-reset:hover { border-color: var(--rojo); color: var(--rojo); }
+  .active-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; align-items: center; }
+  .atag { background: var(--rojo-light); border-radius: 4px; padding: 3px 9px; font-size: 11px; color: var(--rojo-dark); font-weight: 500; }
+
+  /* CONTENT */
+  .content { padding: 28px 40px; max-width: 1280px; margin: 0 auto; }
+
+  /* KPI */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi-card { background: var(--blanco); border-radius: 8px; border: 1px solid var(--gris-borde); padding: 18px 20px; position: relative; overflow: hidden; transition: box-shadow 0.15s; }
+  .kpi-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--rojo); }
+  .kpi-card.k26::before { background: var(--gris-medio); }
+  .kpi-label { font-size: 10px; font-weight: 600; color: var(--gris-suave); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .kpi-year { font-size: 11px; font-weight: 600; color: var(--rojo); margin-bottom: 3px; }
+  .kpi-year.y26 { color: var(--gris-medio); }
+  .kpi-val { font-family: 'Barlow Condensed', sans-serif; font-size: 36px; font-weight: 600; color: var(--carbon); line-height: 1; margin-bottom: 5px; }
+  .kpi-delta { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; display: inline-block; }
+  .d-neg { background: var(--verde-bg); color: var(--verde); }
+  .d-pos { background: var(--rojo-light); color: var(--rojo-dark); }
+  .d-neu { background: var(--gris-bg); color: var(--gris-suave); }
+
+  /* CHARTS */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .chart-card { background: var(--blanco); border-radius: 8px; border: 1px solid var(--gris-borde); padding: 20px 22px; }
+  .chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+  .chart-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; color: var(--carbon); letter-spacing: 0.02em; }
+  .chart-sub { font-size: 11px; color: var(--gris-suave); margin-top: 2px; }
+  .legend-row { display: flex; gap: 12px; }
+  .leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--gris-suave); }
+  .leg-sq { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* SUMMARY TABLES */
+  .tables-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .table-card { background: var(--blanco); border-radius: 8px; border: 1px solid var(--gris-borde); overflow: hidden; }
+  .tbl-head { background: var(--carbon); padding: 11px 18px; }
+  .tbl-head-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; color: #fff; letter-spacing: 0.05em; text-transform: uppercase; }
+  table.comp { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.comp thead th { background: var(--gris-bg); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gris-suave); padding: 7px 18px; text-align: left; border-bottom: 1px solid var(--gris-borde); }
+  table.comp tbody td { padding: 9px 18px; border-bottom: 1px solid var(--gris-borde); color: var(--carbon); }
+  table.comp tbody tr:last-child td { border-bottom: none; background: #FAF9F8; font-weight: 600; }
+  .val-25 { color: var(--rojo); font-weight: 500; }
+  .val-26 { color: var(--gris-medio); font-weight: 500; }
+  .pill { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; display: inline-block; }
+  .p-dn { background: var(--verde-bg); color: var(--verde); }
+  .p-up { background: var(--rojo-light); color: var(--rojo-dark); }
+  .p-ne { background: var(--gris-bg); color: var(--gris-suave); }
+
+  /* REFERENCES SECTION */
+  .refs-section { margin-bottom: 20px; }
+  .refs-section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 600; color: var(--carbon);
+    letter-spacing: 0.03em; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .refs-section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--gris-borde);
+  }
+  .refs-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* REF CARD */
+  .ref-card { background: var(--blanco); border-radius: 8px; border: 1px solid var(--gris-borde); overflow: hidden; }
+  .ref-card-head {
+    background: var(--carbon); padding: 10px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ref-card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; color: #fff; letter-spacing: 0.05em; text-transform: uppercase; }
+  .ref-year-tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 3px; }
+  .ryt-25 { background: var(--rojo); color: #fff; }
+  .ryt-26 { background: var(--gris-medio); color: #fff; }
+
+  /* MONTH ACCORDION */
+  .month-block { border-bottom: 1px solid var(--gris-borde); }
+  .month-block:last-child { border-bottom: none; }
+  .month-toggle {
+    width: 100%; background: none; border: none; cursor: pointer;
+    padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;
+    font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 500; color: var(--carbon);
+    text-align: left; transition: background 0.12s;
+  }
+  .month-toggle:hover { background: var(--gris-bg); }
+  .month-toggle .mtleft { display: flex; align-items: center; gap: 8px; }
+  .month-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .md-25 { background: var(--rojo); }
+  .md-26 { background: var(--gris-medio); }
+  .month-meta { font-size: 11px; color: var(--gris-suave); font-weight: 400; }
+  .month-arrow { font-size: 11px; color: var(--gris-suave); transition: transform 0.2s; }
+  .month-arrow.open { transform: rotate(180deg); }
+  .month-body { display: none; padding: 0 16px 12px; }
+  .month-body.open { display: block; }
+
+  /* REF TABLE inside accordion */
+  table.reftbl { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
+  table.reftbl thead th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gris-suave); padding: 5px 8px; border-bottom: 1px solid var(--gris-borde); text-align: left; background: var(--gris-bg); }
+  table.reftbl tbody td { padding: 6px 8px; border-bottom: 1px solid var(--gris-borde); color: var(--carbon); }
+  table.reftbl tbody tr:last-child td { border-bottom: none; }
+  table.reftbl tbody tr:hover td { background: #FAF9F8; }
+  .ref-code { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; color: var(--carbon); }
+  .ref-units { font-weight: 500; text-align: right; }
+  .ref-bar-wrap { width: 80px; }
+  .ref-bar { height: 4px; border-radius: 2px; background: var(--rojo); }
+  .ref-bar-26 { background: var(--gris-medio); }
+  .empty-refs { padding: 16px; font-size: 12px; color: var(--gris-suave); text-align: center; }
+
+  /* INSIGHT */
+  .insight-bar { background: var(--carbon); border-radius: 8px; padding: 16px 24px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .ins-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; color: var(--rojo); text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
+  .ins-div { width: 1px; height: 28px; background: rgba(255,255,255,0.15); }
+  .ins-item { text-align: center; }
+  .ins-val { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 600; color: #fff; line-height: 1; }
+  .ins-desc { font-size: 10px; color: var(--gris-suave); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .footer { margin-top: 10px; display: flex; justify-content: space-between; padding-top: 14px; border-top: 1px solid var(--gris-borde); }
+  .footer-note { font-size: 10px; color: var(--gris-suave); }
+  .no-data { text-align: center; padding: 40px; color: var(--gris-suave); font-size: 13px; grid-column: span 4; }
+
+  /* MOTIVOS SECTION */
+  .motivos-section { margin-bottom: 20px; }
+  .section-divider {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 600; color: var(--carbon);
+    letter-spacing: 0.03em; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--gris-borde); }
+  .motivos-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .motivos-card { background: var(--blanco); border-radius: 8px; border: 1px solid var(--gris-borde); overflow: hidden; }
+  .motivos-card-head {
+    background: var(--carbon); padding: 10px 16px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .motivos-card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; color: #fff; letter-spacing: 0.05em; text-transform: uppercase; }
+  .motivos-card-sub { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+  .mc-year-tag { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 3px; }
+  .mc-25 { background: var(--rojo); color: #fff; }
+  .mc-26 { background: var(--gris-medio); color: #fff; }
+  .pareto-wrap { padding: 16px 16px 8px; position: relative; }
+  .pareto-chart-area { position: relative; height: 240px; }
+  .pareto-hint { font-size: 11px; color: var(--gris-suave); padding: 0 16px 10px; }
+
+  /* DETAIL PANEL (slide-down) */
+  .motivo-detail { display: none; border-top: 1px solid var(--gris-borde); background: #FAFAFA; padding: 14px 16px; }
+  .motivo-detail.open { display: block; }
+  .md-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .md-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; color: var(--carbon); }
+  .md-close { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--gris-suave); line-height: 1; padding: 2px 4px; }
+  .md-close:hover { color: var(--rojo); }
+  .md-meta { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .md-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 4px; }
+  .md-pqrs-list { font-size: 11px; color: var(--gris-suave); margin-bottom: 10px; }
+  .md-pqrs-list span { font-weight: 500; color: var(--carbon); }
+  table.md-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.md-tbl thead th { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gris-suave); padding: 5px 8px; border-bottom: 1px solid var(--gris-borde); text-align: left; background: var(--gris-bg); }
+  table.md-tbl tbody td { padding: 6px 8px; border-bottom: 1px solid var(--gris-borde); color: var(--carbon); }
+  table.md-tbl tbody tr:last-child td { border-bottom: none; }
+  table.md-tbl tbody tr:hover td { background: #F5F4F2; }
+  .md-ref-code { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; }
+  .md-bar-wrap { width: 80px; }
+  .md-bar { height: 4px; border-radius: 2px; }
+  .md-bar-25 { background: var(--rojo); }
+  .md-bar-26 { background: var(--gris-medio); }
+
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row, .tables-row, .refs-cols, .motivos-cols { grid-template-columns: 1fr; }
+    .header, .filter-bar, .content { padding-left: 20px; padding-right: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo">TERCOL</div>
+    <div>
+      <div class="h-title">Dashboard PQRS — Calidad</div>
+      <div class="h-sub">Análisis comparativo · Área de Calidad</div>
+    </div>
+  </div>
+  <div>
+    <div><span class="badge-q1" id="badgePeriod">Q1 · Enero – Marzo</span></div>
+    <div class="h-date">Generado: abril 2026</div>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <div class="filter-group">
+    <span class="filter-label">Mes</span>
+    <button class="fbtn active" data-mes="1" onclick="toggleMes(1)">Enero</button>
+    <button class="fbtn active" data-mes="2" onclick="toggleMes(2)">Febrero</button>
+    <button class="fbtn active" data-mes="3" onclick="toggleMes(3)">Marzo</button>
+  </div>
+  <div class="filter-divider"></div>
+  <div class="filter-group">
+    <span class="filter-label">Año</span>
+    <button class="fbtn active" data-year="2025" onclick="toggleYear(2025)">2025</button>
+    <button class="fbtn active" data-year="2026" onclick="toggleYear(2026)">2026</button>
+  </div>
+  <div class="filter-divider"></div>
+  <button class="filter-reset" onclick="resetFilters()">↺ Restablecer</button>
+  <div class="active-tags" id="activeTags"></div>
+</div>
+
+<div class="content">
+  <div class="kpi-grid" id="kpiGrid"></div>
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="chart-header">
+        <div><div class="chart-title">Frecuencia de PQRS por mes</div><div class="chart-sub">PQRs únicos (sin duplicados de radicado)</div></div>
+        <div class="legend-row" id="legendFreq"></div>
+      </div>
+      <div style="position:relative;height:230px;"><canvas id="chartFreq"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-header">
+        <div><div class="chart-title">Unidades afectadas por mes</div><div class="chart-sub">Suma de unidades por radicado</div></div>
+        <div class="legend-row" id="legendUnits"></div>
+      </div>
+      <div style="position:relative;height:230px;"><canvas id="chartUnits"></canvas></div>
+    </div>
+  </div>
+
+  <!-- SUMMARY TABLES -->
+  <div class="tables-row">
+    <div class="table-card">
+      <div class="tbl-head"><div class="tbl-head-title">Frecuencia mensual — detalle</div></div>
+      <table class="comp"><thead><tr><th>Mes</th><th>2025</th><th>2026</th><th>Variación</th></tr></thead><tbody id="tbodyFreq"></tbody></table>
+    </div>
+    <div class="table-card">
+      <div class="tbl-head"><div class="tbl-head-title">Unidades afectadas — detalle</div></div>
+      <table class="comp"><thead><tr><th>Mes</th><th>2025</th><th>2026</th><th>Variación</th></tr></thead><tbody id="tbodyUnits"></tbody></table>
+    </div>
+  </div>
+
+  <!-- REFERENCES SECTION -->
+  <div class="refs-section">
+    <div class="refs-section-title">Referencias afectadas por mes y año</div>
+    <div class="refs-cols">
+      <div id="refCard2025"></div>
+      <div id="refCard2026"></div>
+    </div>
+  </div>
+
+  <!-- MOTIVOS SECTION -->
+  <div class="motivos-section">
+    <div class="section-divider">Análisis de motivos — Diagrama de Pareto</div>
+    <div class="motivos-cols">
+      <div id="motivosCard2025"></div>
+      <div id="motivosCard2026"></div>
+    </div>
+  </div>
+
+  <div class="insight-bar" id="insightBar"></div>
+  <div class="footer">
+    <div class="footer-note">Fuente: PQR_Clientes_2025-1.xlsx · PQRS_Admin_2026-04-13.xlsx — Hoja Calidad</div>
+    <div class="footer-note" id="footerPeriod">Periodo: Q1 (Enero – Marzo) · Solo PQRs únicos</div>
+  </div>
+</div>
+
+<script>
+// ── RAW DATA ──────────────────────────────────────────────────────────
+const RAW = {
+  freq:  { 2025: {1:15, 2:26, 3:18}, 2026: {1:3, 2:6, 3:11} },
+  units: { 2025: {1:5529, 2:3161, 3:1784}, 2026: {1:29, 2:10, 3:15} }
+};
+
+const REFS = {
+  2025: {
+    1: [
+      {ref:'CP4X4-CC',units:2465},{ref:'CPOCTOGONAL-CC',units:1902},{ref:'CP2X4-CC',units:1034},
+      {ref:'PAU506G-H',units:28},{ref:'CT30-30-10',units:28},{ref:'TAPAPAU506',units:20},
+      {ref:'TE2',units:20},{ref:'CE60-60-20B',units:13},{ref:'TAPA4PLASTICA',units:2},
+      {ref:'TAPA36RT',units:2},{ref:'TB8PG',units:2},{ref:'TAPA42RT',units:2},
+      {ref:'CE20-20-10',units:1},{ref:'CE20-20-10B',units:1},{ref:'CE125LE',units:1},
+      {ref:'TAPA24RT',units:1},{ref:'ITM115',units:1},{ref:'ITM220',units:1},
+      {ref:'ITM250',units:1},{ref:'TB18PG',units:1},{ref:'TB12PG',units:1},
+      {ref:'TRP236G',units:1},{ref:'TRP324',units:1}
+    ],
+    2: [
+      {ref:'CP2X4-CC',units:2250},{ref:'CP4X4-CC',units:540},{ref:'TTP4MG-BIMETALICO',units:90},
+      {ref:'TTP6MG-BIMETALICO',units:60},{ref:'TIERRA12',units:34},{ref:'NEUTRO12',units:34},
+      {ref:'PUERTA12-95',units:30},{ref:'TE4MG-BIMETALICO',units:20},{ref:'TE4PG-BIMETALICO',units:18},
+      {ref:'TE6PG-BIMETALICO',units:16},{ref:'I318-BIM',units:10},{ref:'VISOR8',units:8},
+      {ref:'TB12-BIMETALICO',units:7},{ref:'TP306-100 BIMETALICO',units:6},{ref:'TRP318G',units:4},
+      {ref:'TRP312G',units:4},{ref:'TP318-125G',units:3},{ref:'TRP218TG',units:2},
+      {ref:'TE4G-BIMETALICO',units:2},{ref:'TRP318TG-BM',units:2},{ref:'CA-30',units:2},
+      {ref:'CA-40',units:1},{ref:'CA-70',units:1},{ref:'CE20-20-15B',units:1},
+      {ref:'ITM120',units:1},{ref:'TB12PG',units:1},{ref:'TAPA12P',units:1},
+      {ref:'TE4MPG-BIMETALICO',units:1},{ref:'ITM250',units:1},{ref:'TAPA1230R',units:1},
+      {ref:'TAPA6P-125',units:1},{ref:'ITM260',units:1},{ref:'TRP306G',units:1},
+      {ref:'TRP312',units:1},{ref:'TP312-125G',units:1},{ref:'TRP236T',units:1},
+      {ref:'TRP342',units:1},{ref:'TRP336',units:1},{ref:'TRP324TG',units:1},{ref:'TTP6G',units:1}
+    ],
+    3: [
+      {ref:'ITM250',units:1197},{ref:'TE4MG-BIMETALICO',units:240},{ref:'I8-BIM',units:96},
+      {ref:'TTP4G-BIMETALICO',units:62},{ref:'TE8PG-BIMETALICO',units:30},{ref:'TB18PG-BIMETALICO',units:20},
+      {ref:'TE6',units:20},{ref:'TE6G-BIMETALICO',units:20},{ref:'TE4G-BIMETALICO',units:20},
+      {ref:'TTP12G-BIMETALICO',units:12},{ref:'TAPA8E',units:10},{ref:'TTP12MG-BIMETALICO',units:6},
+      {ref:'TP306G-100 BIMETALICO',units:6},{ref:'TP312-125',units:6},{ref:'TP318G-100 BIMETALICO',units:6},
+      {ref:'CTUBON',units:4},{ref:'TAPA18P',units:3},{ref:'TRP342TG-BM',units:3},
+      {ref:'TAPA36RT',units:2},{ref:'TAPA4P',units:2},{ref:'TTP8G-BIMETALICO',units:2},
+      {ref:'CE60-60-20B',units:1},{ref:'ITM120',units:1},{ref:'I236',units:1},
+      {ref:'CE40-40-15B',units:1},{ref:'TE6MG-BIMETALICO',units:1},{ref:'TAPA12R',units:1},
+      {ref:'TAPAPAU506G',units:1},{ref:'TAPA24R',units:1},{ref:'TAPA42R',units:1},
+      {ref:'TRP230TG',units:1},{ref:'TRP230T',units:1},{ref:'TRP224T',units:1},
+      {ref:'TER6BG',units:1},{ref:'TP306-100 BIMETALICO',units:1},{ref:'TTP12G',units:1},
+      {ref:'TRP324TG',units:1},{ref:'TRP342T',units:1}
+    ]
+  },
+  2026: {
+    1: [
+      {ref:'GPISO100G',units:24},{ref:'I12P',units:2},{ref:'I218',units:1},
+      {ref:'I224',units:1},{ref:'I312',units:1}
+    ],
+    2: [
+      {ref:'TRP224G',units:2},{ref:'CE15-15-10B',units:1},{ref:'I336',units:1},
+      {ref:'ITM140',units:1},{ref:'ITM120',units:1},{ref:'TAPA24R',units:1},
+      {ref:'TB12PG',units:1},{ref:'TRP218TG',units:1},{ref:'TRP224',units:1}
+    ],
+    3: [
+      {ref:'CT40-40-20',units:2},{ref:'TAPA18RT',units:2},{ref:'TE6G-BIMETALICO',units:2},
+      {ref:'TAPA24R',units:1},{ref:'TAPA24RT',units:1},{ref:'TE6MG-BIMETALICO',units:1},
+      {ref:'TP306-100 BIMETALICO',units:1},{ref:'TRP224G',units:1},{ref:'TRP318',units:1},
+      {ref:'TRP324TG',units:1},{ref:'TRP324TG-BM',units:1},{ref:'TRP342TG',units:1}
+    ]
+  }
+};
+
+const MES_NAMES = {1:'Enero',2:'Febrero',3:'Marzo'};
+const COLORS = {2025:'#AC0711',2026:'#4B4949'};
+let state = { meses:[1,2,3], years:[2025,2026] };
+let chartFreq=null, chartUnits=null;
+
+function fmt(n){return Number(n).toLocaleString('es-CO');}
+function pct(a,b){if(a===0&&b===0)return'0.0';if(a===0)return'+∞';return(((b-a)/a)*100).toFixed(1);}
+function pillClass(v25,v26){const d=v26-v25;return d<0?'p-dn':d>0?'p-up':'p-ne';}
+function pillText(v25,v26){const p=parseFloat(pct(v25,v26));if(isNaN(p))return'—';const a=p<0?'▼':p>0?'▲':'=';return a+' '+(p>0?'+':'')+p+'%';}
+function getTotal(metric,year){return state.meses.reduce((s,m)=>s+(RAW[metric][year]?.[m]||0),0);}
+function periodLabel(){if(state.meses.length===3)return'Q1 · Enero – Marzo';if(state.meses.length===0)return'Sin meses';return state.meses.slice().sort((a,b)=>a-b).map(m=>MES_NAMES[m]).join(' + ');}
+
+// ── KPIs ──
+function updateKPIs(){
+  const s25=state.years.includes(2025),s26=state.years.includes(2026);
+  const f25=getTotal('freq',2025),f26=getTotal('freq',2026);
+  const u25=getTotal('units',2025),u26=getTotal('units',2026);
+  let h='';
+  if(!s25&&!s26){document.getElementById('kpiGrid').innerHTML='<div class="no-data">Selecciona al menos un año.</div>';return;}
+  if(s25)h+=`<div class="kpi-card"><div class="kpi-label">Frecuencia PQRs únicos</div><div class="kpi-year">2025</div><div class="kpi-val">${fmt(f25)}</div><div class="kpi-delta d-pos">Año anterior</div></div>`;
+  if(s26)h+=`<div class="kpi-card k26"><div class="kpi-label">Frecuencia PQRs únicos</div><div class="kpi-year y26">2026</div><div class="kpi-val">${fmt(f26)}</div>${s25?`<div class="kpi-delta ${f26<=f25?'d-neg':'d-pos'}">${pillText(f25,f26)} vs 2025</div>`:'<div class="kpi-delta d-neu">Año actual</div>'}</div>`;
+  if(s25)h+=`<div class="kpi-card"><div class="kpi-label">Unidades afectadas</div><div class="kpi-year">2025</div><div class="kpi-val">${fmt(u25)}</div><div class="kpi-delta d-pos">Año anterior</div></div>`;
+  if(s26)h+=`<div class="kpi-card k26"><div class="kpi-label">Unidades afectadas</div><div class="kpi-year y26">2026</div><div class="kpi-val">${fmt(u26)}</div>${s25?`<div class="kpi-delta ${u26<=u25?'d-neg':'d-pos'}">${pillText(u25,u26)} vs 2025</div>`:'<div class="kpi-delta d-neu">Año actual</div>'}</div>`;
+  document.getElementById('kpiGrid').innerHTML=h;
+}
+
+// ── CHARTS ──
+function updateCharts(){
+  const meses=state.meses.slice().sort((a,b)=>a-b);
+  const labels=meses.map(m=>MES_NAMES[m]);
+  const opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+fmt(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{font:{size:12,family:"'Barlow',sans-serif"},color:'#8D8D8D'},border:{color:'#E1DFDF'}},y:{grid:{color:'rgba(136,135,128,0.12)'},ticks:{font:{size:11,family:"'Barlow',sans-serif"},color:'#8D8D8D',callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v},border:{display:false}}}};
+  function ds(metric){return state.years.map(y=>({label:String(y),data:meses.map(m=>RAW[metric][y]?.[m]||0),backgroundColor:COLORS[y],borderRadius:4,barPercentage:state.years.length===1?0.4:0.7,categoryPercentage:0.8}));}
+  if(chartFreq)chartFreq.destroy();
+  if(chartUnits)chartUnits.destroy();
+  chartFreq=new Chart(document.getElementById('chartFreq'),{type:'bar',data:{labels,datasets:ds('freq')},options:opts});
+  chartUnits=new Chart(document.getElementById('chartUnits'),{type:'bar',data:{labels,datasets:ds('units')},options:opts});
+  ['legendFreq','legendUnits'].forEach(id=>{document.getElementById(id).innerHTML=state.years.map(y=>`<div class="leg-item"><span class="leg-sq" style="background:${COLORS[y]};"></span>${y}</div>`).join('');});
+}
+
+// ── SUMMARY TABLES ──
+function updateTables(){
+  const meses=state.meses.slice().sort((a,b)=>a-b);
+  const s25=state.years.includes(2025),s26=state.years.includes(2026);
+  ['freq','units'].forEach(metric=>{
+    let rows='',tot25=0,tot26=0;
+    meses.forEach(m=>{
+      const v25=RAW[metric][2025]?.[m]||0,v26=RAW[metric][2026]?.[m]||0;
+      tot25+=v25;tot26+=v26;
+      rows+=`<tr><td>${MES_NAMES[m]}</td><td class="val-25">${s25?fmt(v25):'—'}</td><td class="val-26">${s26?fmt(v26):'—'}</td><td>${(s25&&s26)?`<span class="pill ${pillClass(v25,v26)}">${pillText(v25,v26)}</span>`:'—'}</td></tr>`;
+    });
+    if(meses.length>0){
+      const lbl=meses.length===3?'Total Q1':meses.length===1?MES_NAMES[meses[0]]:'Total selección';
+      rows+=`<tr><td>${lbl}</td><td class="val-25">${s25?fmt(tot25):'—'}</td><td class="val-26">${s26?fmt(tot26):'—'}</td><td>${(s25&&s26)?`<span class="pill ${pillClass(tot25,tot26)}">${pillText(tot25,tot26)}</span>`:'—'}</td></tr>`;
+    }
+    document.getElementById(metric==='freq'?'tbodyFreq':'tbodyUnits').innerHTML=rows||'<tr><td colspan="4" style="text-align:center;padding:20px;color:#8D8D8D;">Sin datos</td></tr>';
+  });
+}
+
+// ── REFERENCE CARDS ──
+function buildRefCard(year) {
+  const active = state.years.includes(year);
+  const meses = state.meses.slice().sort((a,b)=>a-b);
+  const isYear25 = year === 2025;
+  const dotClass = isYear25 ? 'md-25' : 'md-26';
+  const tagClass = isYear25 ? 'ryt-25' : 'ryt-26';
+  const barClass = isYear25 ? '' : 'ref-bar-26';
+
+  if (!active) {
+    return `<div class="ref-card">
+      <div class="ref-card-head">
+        <div class="ref-card-title">Referencias afectadas</div>
+        <span class="ref-year-tag ${tagClass}">${year}</span>
+      </div>
+      <div class="empty-refs">Año ${year} no seleccionado</div>
+    </div>`;
+  }
+
+  let blocksHtml = '';
+  meses.forEach(m => {
+    const refs = REFS[year]?.[m] || [];
+    const totalUnits = refs.reduce((s,r)=>s+r.units,0);
+    const maxUnits = refs.length ? refs[0].units : 1;
+    const countLabel = refs.length === 1 ? '1 referencia' : `${refs.length} referencias`;
+    const unitsLabel = `${fmt(totalUnits)} unid.`;
+    const bodyId = `refbody-${year}-${m}`;
+    const arrowId = `refarrow-${year}-${m}`;
+
+    let rowsHtml = '';
+    if (refs.length === 0) {
+      rowsHtml = '<tr><td colspan="3" style="text-align:center;color:#8D8D8D;padding:10px 8px;font-size:11px;">Sin referencias</td></tr>';
+    } else {
+      refs.forEach(r => {
+        const barW = Math.max(4, Math.round((r.units / maxUnits) * 80));
+        rowsHtml += `<tr>
+          <td><span class="ref-code">${r.ref}</span></td>
+          <td class="ref-units">${fmt(r.units)}</td>
+          <td class="ref-bar-wrap"><div class="ref-bar ${barClass}" style="width:${barW}px;"></div></td>
+        </tr>`;
+      });
+    }
+
+    blocksHtml += `<div class="month-block">
+      <button class="month-toggle" onclick="toggleMonth('${bodyId}','${arrowId}')">
+        <span class="mtleft">
+          <span class="month-dot ${dotClass}"></span>
+          <span>${MES_NAMES[m]}</span>
+          <span class="month-meta">${countLabel} · ${unitsLabel}</span>
+        </span>
+        <span class="month-arrow" id="${arrowId}">▼</span>
+      </button>
+      <div class="month-body" id="${bodyId}">
+        <table class="reftbl">
+          <thead><tr><th>Referencia</th><th style="text-align:right;">Unidades</th><th></th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>`;
+  });
+
+  return `<div class="ref-card">
+    <div class="ref-card-head">
+      <div class="ref-card-title">Referencias afectadas</div>
+      <span class="ref-year-tag ${tagClass}">${year}</span>
+    </div>
+    ${blocksHtml || '<div class="empty-refs">Sin datos para la selección</div>'}
+  </div>`;
+}
+
+function toggleMonth(bodyId, arrowId) {
+  const body = document.getElementById(bodyId);
+  const arrow = document.getElementById(arrowId);
+  if (!body) return;
+  body.classList.toggle('open');
+  if (arrow) arrow.classList.toggle('open');
+}
+
+function updateRefs() {
+  document.getElementById('refCard2025').innerHTML = buildRefCard(2025);
+  document.getElementById('refCard2026').innerHTML = buildRefCard(2026);
+}
+
+// ── INSIGHT ──
+function updateInsight(){
+  const s25=state.years.includes(2025),s26=state.years.includes(2026);
+  const f25=getTotal('freq',2025),f26=getTotal('freq',2026);
+  const u25=getTotal('units',2025),u26=getTotal('units',2026);
+  let h=`<div class="ins-label">Resumen<br>ejecutivo</div>`;
+  if(s25&&s26){h+=`<div class="ins-div"></div><div class="ins-item"><div class="ins-val">${pct(f25,f26)}%</div><div class="ins-desc">Var. frecuencia</div></div><div class="ins-div"></div><div class="ins-item"><div class="ins-val">${pct(u25,u26)}%</div><div class="ins-desc">Var. unidades</div></div><div class="ins-div"></div><div class="ins-item"><div class="ins-val">${fmt(Math.abs(u25-u26))}</div><div class="ins-desc">Unidades diferencia</div></div><div class="ins-div"></div><div class="ins-item"><div class="ins-val">${Math.abs(f25-f26)}</div><div class="ins-desc">PQRs diferencia</div></div><div class="ins-div"></div><div class="ins-item"><div class="ins-val">${f26<f25?'2026':'2025'}</div><div class="ins-desc">Mejor desempeño</div></div>`;}
+  else if(s25)h+=`<div class="ins-div"></div><div class="ins-item"><div class="ins-val">${fmt(f25)}</div><div class="ins-desc">Frecuencia 2025</div></div><div class="ins-div"></div><div class="ins-item"><div class="ins-val">${fmt(u25)}</div><div class="ins-desc">Unidades 2025</div></div>`;
+  else if(s26)h+=`<div class="ins-div"></div><div class="ins-item"><div class="ins-val">${fmt(f26)}</div><div class="ins-desc">Frecuencia 2026</div></div><div class="ins-div"></div><div class="ins-item"><div class="ins-val">${fmt(u26)}</div><div class="ins-desc">Unidades 2026</div></div>`;
+  document.getElementById('insightBar').innerHTML=h;
+}
+
+function updateMeta(){
+  document.getElementById('badgePeriod').textContent=periodLabel();
+  document.getElementById('footerPeriod').textContent='Periodo: '+periodLabel()+' · Solo PQRs únicos';
+  let tags='';
+  if(state.meses.length<3&&state.meses.length>0)tags+=`<span class="atag">${state.meses.slice().sort((a,b)=>a-b).map(m=>MES_NAMES[m]).join(', ')}</span>`;
+  if(state.meses.length===0)tags+=`<span class="atag">Sin meses</span>`;
+  if(!state.years.includes(2025))tags+=`<span class="atag">Solo 2026</span>`;
+  if(!state.years.includes(2026))tags+=`<span class="atag">Solo 2025</span>`;
+  document.getElementById('activeTags').innerHTML=tags;
+}
+
+function render(){updateKPIs();updateCharts();updateTables();updateRefs();updateInsight();updateMeta();updateMotivos();}
+
+function toggleMes(m){
+  const idx=state.meses.indexOf(m);
+  if(idx>-1){if(state.meses.length===1)return;state.meses.splice(idx,1);}
+  else{state.meses.push(m);}
+  document.querySelectorAll('[data-mes]').forEach(b=>b.classList.toggle('active',state.meses.includes(parseInt(b.dataset.mes))));
+  render();
+}
+
+function toggleYear(y){
+  const idx=state.years.indexOf(y);
+  if(idx>-1){if(state.years.length===1)return;state.years.splice(idx,1);}
+  else{state.years.push(y);state.years.sort();}
+  document.querySelectorAll('[data-year]').forEach(b=>b.classList.toggle('active',state.years.includes(parseInt(b.dataset.year))));
+  render();
+}
+
+function resetFilters(){
+  state={meses:[1,2,3],years:[2025,2026]};
+  document.querySelectorAll('[data-mes]').forEach(b=>b.classList.add('active'));
+  document.querySelectorAll('[data-year]').forEach(b=>b.classList.add('active'));
+  render();
+}
+
+// ════════════════════════════════════════════════════════
+// MOTIVOS — PARETO DATA + RENDERING
+// ════════════════════════════════════════════════════════
+const MOTIVOS = {
+  2025: {
+    1: {
+      "PUNTAS DOBLADAS":            {count:4, pqrs:[66,67,72,76],       refs:[{ref:"TAPA36RT",units:2},{ref:"CE20-20-10B",units:1},{ref:"TAPA24RT",units:1},{ref:"TAPA42RT",units:1}]},
+      "FALTANTE DE PIEZAS":         {count:3, pqrs:[67,68,75],          refs:[{ref:"TB8PG",units:2},{ref:"CE20-20-10",units:1},{ref:"TB12PG",units:1}]},
+      "BARRAJES SUELTOS":           {count:2, pqrs:[72,78],             refs:[{ref:"TRP236G",units:1},{ref:"TRP324",units:1}]},
+      "MAL USO DEL PRODUCTO":       {count:2, pqrs:[67,81],             refs:[{ref:"CP4X4-CC",units:2465},{ref:"CPOCTOGONAL-CC",units:1902},{ref:"CP2X4-CC",units:1034},{ref:"ITM115",units:1},{ref:"ITM220",units:1},{ref:"ITM250",units:1}]},
+      "REFERENCIA MAL SOLICITADA":  {count:2, pqrs:[71,79],             refs:[{ref:"CT30-30-10",units:28},{ref:"PAU506G-H",units:28}]},
+      "CLIENTE FINAL CANCELA":      {count:1, pqrs:[70],                refs:[{ref:"CE60-60-20B",units:12}]},
+      "DAÑOS EN ALMACENAMIENTO":    {count:1, pqrs:[69],                refs:[{ref:"CE125LE",units:1}]},
+      "DESPACHO INCOMPLETO":        {count:1, pqrs:[77],                refs:[{ref:"TAPA4PLASTICA",units:2}]},
+      "ERROR ADMINISTRATIVO":       {count:1, pqrs:[66],                refs:[{ref:"TAPAPAU506",units:20}]},
+      "ERROR EN REFERENCIAS":       {count:1, pqrs:[74],                refs:[{ref:"TE2",units:20}]},
+      "MAL CURADO DE PINTURA":      {count:1, pqrs:[75],                refs:[{ref:"TAPA42RT",units:1}]},
+      "REGLETAS REVENTADAS":        {count:1, pqrs:[75],                refs:[{ref:"TB18PG",units:1}]},
+      "VISAGRA DEFECTUOSA":         {count:1, pqrs:[80],                refs:[{ref:"CE60-60-20B",units:1}]}
+    },
+    2: {
+      "MERCANCIA EN MAL ESTADO":               {count:4, pqrs:[84,98,99,100], refs:[{ref:"CA-40",units:1},{ref:"TAPA6P-125",units:1},{ref:"TB12PG",units:1},{ref:"TRP218TG",units:1},{ref:"TRP236T",units:1}]},
+      "REFERENCIA MAL SOLICITADA":             {count:4, pqrs:[93,94,96,97],  refs:[{ref:"TTP4MG-BIMETALICO",units:90},{ref:"TTP6MG-BIMETALICO",units:60},{ref:"I318-BIM",units:10},{ref:"VISOR8",units:8},{ref:"TRP312G",units:4},{ref:"TRP318G",units:4}]},
+      "DESPACHO DE MATERIAL ERRADO O TROCADO": {count:3, pqrs:[86,87,88],     refs:[{ref:"CP2X4-CC",units:1800},{ref:"CP4X4-CC",units:540}]},
+      "FALTANTE DE PIEZAS":                    {count:3, pqrs:[84,89,99],     refs:[{ref:"CA-30",units:2},{ref:"TE4G-BIMETALICO",units:2},{ref:"TRP306G",units:1}]},
+      "CLIENTE FINAL CANCELA":                 {count:2, pqrs:[85,101],       refs:[{ref:"NEUTRO12",units:34},{ref:"TIERRA12",units:34},{ref:"PUERTA12-95",units:30},{ref:"TP318-125G",units:3}]},
+      "ERROR EN MARCACIÓN":                    {count:2, pqrs:[83,106],       refs:[{ref:"TE4PG-BIMETALICO",units:18},{ref:"TTP6G",units:1}]},
+      "PERDIDA DE MATERIAL":                   {count:2, pqrs:[91,92],        refs:[{ref:"CP2X4-CC",units:450},{ref:"TRP312",units:1}]},
+      "PESTILLO BREAKER NO DISPARA":           {count:2, pqrs:[73,90],        refs:[{ref:"ITM120",units:1},{ref:"ITM250",units:1},{ref:"ITM260",units:1}]},
+      "PUNTAS DOBLADAS":                       {count:2, pqrs:[93,103],       refs:[{ref:"CA-70",units:1},{ref:"TAPA1230R",units:1},{ref:"TAPA12P",units:1},{ref:"TRP218TG",units:1}]},
+      "REGLETAS REVENTADAS":                   {count:2, pqrs:[73,82],        refs:[{ref:"TE4MPG-BIMETALICO",units:1},{ref:"TRP336",units:1}]},
+      "TORNILLO CUADRANTE RODADO":             {count:2, pqrs:[104,105],      refs:[{ref:"TP312-125G",units:1},{ref:"TRP324TG",units:1}]},
+      "BARRAJES SUELTOS":                      {count:1, pqrs:[78],           refs:[{ref:"TRP342",units:1}]},
+      "CIERRE PLASTICO DEFECTUOSO":            {count:1, pqrs:[84],           refs:[{ref:"CE20-20-15B",units:1}]},
+      "ERROR EN DIRECCIÓN":                    {count:1, pqrs:[95],           refs:[{ref:"TE4MG-BIMETALICO",units:20},{ref:"TE6PG-BIMETALICO",units:16},{ref:"TB12-BIMETALICO",units:7},{ref:"TP306-100 BIMETALICO",units:6},{ref:"TRP318TG-BM",units:2}]}
+    },
+    3: {
+      "ERROR EN REFERENCIAS":                  {count:3, pqrs:[108,115,116],  refs:[{ref:"TE6",units:20},{ref:"TRP342TG-BM",units:3},{ref:"TP306-100 BIMETALICO",units:1}]},
+      "PUNTAS DOBLADAS":                       {count:3, pqrs:[113,114,118],  refs:[{ref:"TAPA12R",units:1},{ref:"TAPAPAU506G",units:1},{ref:"TER6BG",units:1},{ref:"TRP224T",units:1},{ref:"TRP230T",units:1},{ref:"TRP230TG",units:1},{ref:"TRP342T",units:1}]},
+      "REFERENCIA MAL SOLICITADA":             {count:3, pqrs:[102,117,124],  refs:[{ref:"TE8PG-BIMETALICO",units:30},{ref:"TE4G-BIMETALICO",units:20},{ref:"TE6G-BIMETALICO",units:20},{ref:"TAPA24R",units:1}]},
+      "CIERRE PLASTICO DEFECTUOSO":            {count:2, pqrs:[110,122],      refs:[{ref:"CE40-40-15B",units:1},{ref:"CE60-60-20B",units:1}]},
+      "ERROR ADMINISTRATIVO":                  {count:2, pqrs:[109,119],      refs:[{ref:"ITM250",units:1197},{ref:"TE4MG-BIMETALICO",units:240},{ref:"I8-BIM",units:96},{ref:"TTP4G-BIMETALICO",units:62},{ref:"TTP12G-BIMETALICO",units:12},{ref:"TP306G-100 BIMETALICO",units:6},{ref:"TP318G-100 BIMETALICO",units:6},{ref:"TTP12MG-BIMETALICO",units:6}]},
+      "MAL CURADO DE PINTURA":                 {count:2, pqrs:[110,121],      refs:[{ref:"TAPA18P",units:3},{ref:"TAPA36RT",units:1}]},
+      "TORNILLO CUADRANTE RODADO":             {count:2, pqrs:[112,122],      refs:[{ref:"CTUBON",units:4},{ref:"TRP324TG",units:1}]},
+      "CLIENTE FINAL CANCELA":                 {count:1, pqrs:[107],          refs:[{ref:"TB18PG-BIMETALICO",units:20}]},
+      "DEDOS DE CENTROS/LATERALES DOBLADOS":   {count:1, pqrs:[114],          refs:[{ref:"TE6MG-BIMETALICO",units:1}]},
+      "DESPACHO INCOMPLETO":                   {count:1, pqrs:[120],          refs:[{ref:"TTP8G-BIMETALICO",units:1}]},
+      "EXCESO/DEFECTO DE PINTURA":             {count:1, pqrs:[121],          refs:[{ref:"TAPA8E",units:10}]},
+      "MALA ATENCIÓN COMERCIAL":               {count:1, pqrs:[126],          refs:[{ref:"TP312-125",units:6}]},
+      "MERCANCIA EN MAL ESTADO":               {count:1, pqrs:[121],          refs:[{ref:"TAPA4P",units:2},{ref:"TAPA36RT",units:1},{ref:"TAPA42R",units:1},{ref:"TTP12G",units:1}]},
+      "OTRO":                                  {count:1, pqrs:[120],          refs:[{ref:"TTP8G-BIMETALICO",units:1}]},
+      "PESTILLO BREAKER NO DISPARA":           {count:1, pqrs:[122],          refs:[{ref:"ITM120",units:1}]},
+      "REGLETAS REVENTADAS":                   {count:1, pqrs:[121],          refs:[{ref:"I236",units:1}]}
+    }
+  },
+  2026: {
+    1: {
+      "BARRAJE TORCIDO, BREAKER NO ENCAJA O QUEDA ABIERTO": {count:1, pqrs:[303], refs:[{ref:"I12P",units:1}]},
+      "OTRO":                {count:1, pqrs:[308], refs:[{ref:"GPISO100G",units:24}]},
+      "REGLETAS REVENTADAS": {count:1, pqrs:[312], refs:[{ref:"I12P",units:1},{ref:"I218",units:1},{ref:"I224",units:1},{ref:"I312",units:1}]}
+    },
+    2: {
+      "OTRO":                                                {count:2, pqrs:[367,353], refs:[{ref:"TRP224G",units:2},{ref:"TAPA24R",units:1},{ref:"TRP218TG",units:1},{ref:"TRP224",units:1}]},
+      "PESTILLO BREAKER NO DISPARA":                         {count:2, pqrs:[344,323], refs:[{ref:"ITM120",units:1},{ref:"ITM140",units:1},{ref:"TB12PG",units:1}]},
+      "BARRAJE TORCIDO, BREAKER NO ENCAJA O QUEDA ABIERTO":  {count:1, pqrs:[334], refs:[{ref:"I336",units:1}]},
+      "CIERRE PLASTICO DEFECTUOSO":                          {count:1, pqrs:[387], refs:[{ref:"CE15-15-10B",units:1}]}
+    },
+    3: {
+      "OTRO":                                                {count:5, pqrs:[453,443,433,424,400], refs:[{ref:"TE6G-BIMETALICO",units:2},{ref:"TAPA24R",units:1},{ref:"TAPA18RT",units:1},{ref:"TAPA24RT",units:1},{ref:"TE6MG-BIMETALICO",units:1},{ref:"TRP224G",units:1},{ref:"TRP318",units:1}]},
+      "BARRAJE TORCIDO, BREAKER NO ENCAJA O QUEDA ABIERTO":  {count:4, pqrs:[447,440,437,390], refs:[{ref:"TP306-100 BIMETALICO",units:1},{ref:"TRP324TG",units:1},{ref:"TRP324TG-BM",units:1},{ref:"TRP342TG",units:1}]},
+      "CIERRE PLASTICO DEFECTUOSO":                          {count:1, pqrs:[426], refs:[{ref:"CT40-40-20",units:2}]},
+      "EXCESO/DEFECTO DE PINTURA":                           {count:1, pqrs:[405], refs:[{ref:"TAPA18RT",units:1}]}
+    }
+  }
+};
+
+const paretoCharts = {};
+
+function getMotivosMerged(year) {
+  const merged = {};
+  state.meses.forEach(m => {
+    Object.entries(MOTIVOS[year]?.[m] || {}).forEach(([motivo, d]) => {
+      if (!merged[motivo]) merged[motivo] = {count:0, pqrs:[], refs:{}};
+      merged[motivo].count += d.count;
+      merged[motivo].pqrs = [...new Set([...merged[motivo].pqrs, ...d.pqrs])];
+      d.refs.forEach(r => { merged[motivo].refs[r.ref] = (merged[motivo].refs[r.ref]||0) + r.units; });
+    });
+  });
+  return Object.entries(merged)
+    .sort((a,b) => b[1].count - a[1].count)
+    .map(([motivo, d]) => ({
+      motivo, count: d.count, pqrs: d.pqrs,
+      refs: Object.entries(d.refs).map(([ref,units])=>({ref,units})).sort((a,b)=>b.units-a.units)
+    }));
+}
+
+function truncLabel(s, max) { return s.length > max ? s.substring(0, max-1)+'…' : s; }
+
+function buildParetoCard(year) {
+  const active = state.years.includes(year);
+  const tagClass = year===2025 ? 'mc-25' : 'mc-26';
+  if (!active) {
+    return `<div class="motivos-card">
+      <div class="motivos-card-head">
+        <div><div class="motivos-card-title">Motivos de PQRS</div><div class="motivos-card-sub">Diagrama de Pareto</div></div>
+        <span class="mc-year-tag ${tagClass}">${year}</span>
+      </div>
+      <div style="padding:32px;text-align:center;font-size:12px;color:#8D8D8D;">Año ${year} no seleccionado</div>
+    </div>`;
+  }
+  return `<div class="motivos-card">
+    <div class="motivos-card-head">
+      <div>
+        <div class="motivos-card-title">Motivos de PQRS</div>
+        <div class="motivos-card-sub">Toca una barra para ver el detalle</div>
+      </div>
+      <span class="mc-year-tag ${tagClass}">${year}</span>
+    </div>
+    <div class="pareto-wrap">
+      <div class="pareto-chart-area"><canvas id="paretoCanvas-${year}"></canvas></div>
+    </div>
+    <div class="motivo-detail" id="mdetail-${year}">
+      <div class="md-header">
+        <div class="md-title" id="mdTitle-${year}">—</div>
+        <button class="md-close" onclick="closeMotivoDetail(${year})">✕</button>
+      </div>
+      <div class="md-meta" id="mdMeta-${year}"></div>
+      <div class="md-pqrs-list" id="mdPqrs-${year}"></div>
+      <table class="md-tbl">
+        <thead><tr><th>Referencia</th><th style="text-align:right">Unidades</th><th></th></tr></thead>
+        <tbody id="mdRefs-${year}"></tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function renderParetoChart(year) {
+  const canvas = document.getElementById(`paretoCanvas-${year}`);
+  if (!canvas) return;
+  if (paretoCharts[year]) { paretoCharts[year].destroy(); delete paretoCharts[year]; }
+  const isY25 = year === 2025;
+  const barColor = isY25 ? '#AC0711' : '#4B4949';
+  const lineColor = isY25 ? '#721C24' : '#2C2C2C';
+  const data = getMotivosMerged(year);
+  if (!data.length) return;
+  const labels = data.map(d => truncLabel(d.motivo, 22));
+  const counts = data.map(d => d.count);
+  const total = counts.reduce((s,v)=>s+v, 0);
+  let cum = 0;
+  const cumPct = counts.map(c => { cum += c; return Math.round((cum/total)*100); });
+  paretoCharts[year] = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { type:'bar',  label:'PQRs',        data:counts,  backgroundColor:barColor, borderRadius:3, yAxisID:'y',  order:2 },
+        { type:'line', label:'% acumulado', data:cumPct,  borderColor:lineColor, borderWidth:2, pointBackgroundColor:lineColor, pointRadius:4, pointHoverRadius:6, fill:false, yAxisID:'y2', order:1, tension:0.3 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      onClick:(evt, elements) => { if(!elements.length)return; openMotivoDetail(year, data[elements[0].index]); },
+      onHover:(evt,elements) => { canvas.style.cursor = elements.length?'pointer':'default'; },
+      plugins: {
+        legend:{display:false},
+        tooltip:{ callbacks:{ label: ctx => ctx.datasetIndex===0 ? ` PQRs: ${ctx.parsed.y}` : ` Acumulado: ${ctx.parsed.y}%` }}
+      },
+      scales: {
+        x: { grid:{display:false}, ticks:{font:{size:10,family:"'Barlow',sans-serif"},color:'#8D8D8D',maxRotation:38,minRotation:28}, border:{color:'#E1DFDF'} },
+        y: { position:'left', grid:{color:'rgba(136,135,128,0.12)'}, ticks:{font:{size:10},color:'#8D8D8D',stepSize:1}, border:{display:false}, title:{display:true,text:'Frecuencia',font:{size:10},color:'#8D8D8D'} },
+        y2:{ position:'right', min:0, max:100, grid:{display:false}, ticks:{font:{size:10},color:'#8D8D8D',callback:v=>v+'%'}, border:{display:false}, title:{display:true,text:'% acumulado',font:{size:10},color:'#8D8D8D'} }
+      }
+    }
+  });
+}
+
+function openMotivoDetail(year, item) {
+  const detail = document.getElementById(`mdetail-${year}`);
+  if (!detail) return;
+  const isY25 = year===2025;
+  const pillBg = isY25?'#F5E6E7':'#F0F0F0', pillColor = isY25?'#721C24':'#4B4949';
+  const barClass = isY25?'md-bar-25':'md-bar-26';
+  document.getElementById(`mdTitle-${year}`).textContent = item.motivo;
+  const totalUnits = item.refs.reduce((s,r)=>s+r.units,0);
+  document.getElementById(`mdMeta-${year}`).innerHTML =
+    `<span class="md-pill" style="background:${pillBg};color:${pillColor};">${item.count} PQR${item.count>1?'s':''}</span>` +
+    `<span class="md-pill" style="background:#EAF3DE;color:#2D7A40;">${item.refs.length} ref${item.refs.length!==1?'s':''}</span>` +
+    `<span class="md-pill" style="background:#F0F0F0;color:#4B4949;">${totalUnits.toLocaleString('es-CO')} unidades</span>`;
+  document.getElementById(`mdPqrs-${year}`).innerHTML = `Radicados: <span>${item.pqrs.join(', ')}</span>`;
+  const maxU = item.refs[0]?.units||1;
+  document.getElementById(`mdRefs-${year}`).innerHTML = item.refs.map(r => {
+    const bw = Math.max(4, Math.round((r.units/maxU)*76));
+    return `<tr><td><span class="md-ref-code">${r.ref}</span></td><td style="text-align:right;font-weight:500;">${r.units.toLocaleString('es-CO')}</td><td class="md-bar-wrap"><div class="md-bar ${barClass}" style="width:${bw}px;"></div></td></tr>`;
+  }).join('');
+  detail.classList.add('open');
+  detail.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function closeMotivoDetail(year) {
+  document.getElementById(`mdetail-${year}`)?.classList.remove('open');
+}
+
+function updateMotivos() {
+  [2025, 2026].forEach(year => {
+    const slot = document.getElementById(`motivosCard${year}`);
+    if (!slot) return;
+    slot.innerHTML = buildParetoCard(year);
+    renderParetoChart(year);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
